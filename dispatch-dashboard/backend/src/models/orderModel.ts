@@ -62,7 +62,7 @@ export const createOrder = async (orderData: CreateOrderDto): Promise<Order> => 
   const now = new Date();
   
   const result = await query(
-    `INSERT INTO orders (
+    `INSERT INTO order_headers (
       id, order_number, customer_id, 
       pickup_address, pickup_city, pickup_province, pickup_postal_code, pickup_date,
       delivery_address, delivery_city, delivery_province, delivery_postal_code, delivery_date,
@@ -82,7 +82,7 @@ export const createOrder = async (orderData: CreateOrderDto): Promise<Order> => 
 
 // Get all orders with optional filters
 export const getOrders = async (filters?: OrderFilters): Promise<Order[]> => {
-  let queryText = 'SELECT * FROM orders';
+  let queryText = 'SELECT * FROM order_headers';
   const queryParams: any[] = [];
   
   if (filters) {
@@ -121,7 +121,7 @@ export const getOrders = async (filters?: OrderFilters): Promise<Order[]> => {
 
 // Get order by ID
 export const getOrderById = async (id: string): Promise<Order | null> => {
-  const result = await query('SELECT * FROM orders WHERE id = $1', [id]);
+  const result = await query('SELECT * FROM order_headers WHERE id = $1', [id]);
   return result.rows.length ? result.rows[0] : null;
 };
 
@@ -148,7 +148,7 @@ export const updateOrder = async (id: string, updateData: UpdateOrderDto): Promi
   }
   
   const queryText = `
-    UPDATE orders 
+    UPDATE order_headers 
     SET ${updates.join(', ')} 
     WHERE id = $1 
     RETURNING *
@@ -160,7 +160,7 @@ export const updateOrder = async (id: string, updateData: UpdateOrderDto): Promi
 
 // Delete order
 export const deleteOrder = async (id: string): Promise<boolean> => {
-  const result = await query('DELETE FROM orders WHERE id = $1 RETURNING id', [id]);
+  const result = await query('DELETE FROM order_headers WHERE id = $1 RETURNING id', [id]);
   return result.rows.length > 0;
 };
 
@@ -175,7 +175,7 @@ export const getOrderWithShipmentDetails = async (id: string): Promise<any> => {
            d.id as driver_id,
            d.first_name as driver_first_name,
            d.last_name as driver_last_name
-    FROM orders o
+    FROM order_headers o
     LEFT JOIN shipments s ON o.id = s.order_id
     LEFT JOIN vehicles v ON s.vehicle_id = v.id
     LEFT JOIN drivers d ON s.driver_id = d.id

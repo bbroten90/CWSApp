@@ -1,5 +1,5 @@
 // src/app.ts
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import 'express-async-errors';
@@ -11,6 +11,7 @@ import vehicleRoutes from './routes/vehicleRoutes';
 import driverRoutes from './routes/driverRoutes';
 import rateRoutes from './routes/rateRoutes';
 import reportRoutes from './routes/reportRoutes';
+import optimizeRoutes from './routes/optimizeRoutes';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/rates', rateRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/optimize', optimizeRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -36,6 +38,6 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-app.use(errorHandler);
+app.use(errorHandler as express.ErrorRequestHandler);
 
 export default app;

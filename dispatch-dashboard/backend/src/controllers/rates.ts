@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import { Pool, QueryResult } from 'pg';
 import { logger } from '../utils/logger';
-import { query } from '../config/backend-database-connection';
+import pool, { query } from '../config/database';
 
 // Define interfaces for rate table structure
 interface RateTable {
@@ -68,14 +68,7 @@ interface ImportRateRequest {
   csvData: string;
 }
 
-// Use the shared database connection
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432'),
-});
+// Use the shared database connection from config
 
 /**
  * Calculate shipping rate based on origin, destination, weight, and customer

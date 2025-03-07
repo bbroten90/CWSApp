@@ -9,7 +9,7 @@ import {
   getVehicleDetails,
   getVehicleStats,
   getMaintenanceDue
-} from '../controllers/vehicleController';
+} from '../controllers/vehicleControllers';
 
 const router = Router();
 
