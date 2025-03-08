@@ -7,7 +7,7 @@ import {
   Tabs, TabsContent, TabsList, TabsTrigger,
   Button,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from '@/components/ui';
+} from '../components/ui';
 import { MapPin, Truck, Package, DollarSign, Calendar, RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {

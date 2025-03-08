@@ -17,7 +17,7 @@ import {
   Alert,
   AlertTitle,
   AlertDescription
-} from '@/components/ui';
+} from '../components/ui';
 import { Calculator, DollarSign, Warehouse, TruckIcon } from 'lucide-react';
 
 // Types
@@ -257,7 +257,7 @@ const RateCalculator: React.FC = () => {
               <Label htmlFor="customerName">Customer</Label>
               <Select
                 value={formData.customerName}
-                onValueChange={(value) => handleSelectChange('customerName', value)}
+                onValueChange={(value: string) => handleSelectChange('customerName', value)}
                 disabled={loading}
               >
                 <SelectTrigger>
@@ -277,7 +277,7 @@ const RateCalculator: React.FC = () => {
               <Label htmlFor="originWarehouseId">Origin Warehouse</Label>
               <Select
                 value={formData.originWarehouseId}
-                onValueChange={(value) => handleSelectChange('originWarehouseId', value)}
+                onValueChange={(value: string) => handleSelectChange('originWarehouseId', value)}
                 disabled={loading}
               >
                 <SelectTrigger>

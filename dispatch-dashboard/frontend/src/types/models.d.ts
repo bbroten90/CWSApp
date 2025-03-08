@@ -15,6 +15,9 @@ export interface Order {
   special_instructions?: string;
   status?: string;
   warehouse_name?: string;
+  // Additional properties used in maps
+  customer_lat?: string;
+  customer_lng?: string;
 }
 
 export interface Warehouse {
@@ -24,6 +27,9 @@ export interface Warehouse {
   city?: string;
   province?: string;
   postal_code?: string;
+  // Additional properties used in maps
+  latitude?: string;
+  longitude?: string;
 }
 
 export interface Vehicle {

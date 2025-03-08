@@ -5,17 +5,33 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Button } from '../components/ui';
 import { Truck, RefreshCw } from 'lucide-react';
+import { Shipment, Warehouse, Order } from '../types/models';
+
+// Define prop types to fix TypeScript errors
+interface OptimizedRouteMapProps {
+  shipment?: Shipment;
+  warehouse: Warehouse;
+  orders: Order[];
+}
+
+interface RouteWaypoint {
+  orderNumber: string;
+  customerName: string;
+  location: google.maps.LatLng;
+  distance: string;
+  duration: string;
+}
 
 // This component enhances your existing ShipmentMap by adding actual route paths
-const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
-  const mapRef = useRef(null);
-  const [map, setMap] = useState(null);
-  const [directionsRenderer, setDirectionsRenderer] = useState(null);
+const OptimizedRouteMap: React.FC<OptimizedRouteMapProps> = ({ shipment, warehouse, orders }) => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [routeDetails, setRouteDetails] = useState({
     totalDistance: 0,
     totalDuration: 0,
-    waypoints: []
+    waypoints: [] as RouteWaypoint[]
   });
 
   // Initialize Google Map
@@ -24,8 +40,8 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
 
     const newMap = new window.google.maps.Map(mapRef.current, {
       center: { 
-        lat: warehouse?.latitude || 52.9399, 
-        lng: warehouse?.longitude || -106.4509 
+        lat: warehouse?.latitude ? parseFloat(warehouse.latitude) : 52.9399, 
+        lng: warehouse?.longitude ? parseFloat(warehouse.longitude) : -106.4509 
       },
       zoom: 7,
       mapTypeControl: true,
@@ -47,7 +63,7 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
     if (!map || !warehouse) return;
 
     // Clear any existing markers
-    map.data.forEach(feature => {
+    map.data.forEach((feature: any) => {
       map.data.remove(feature);
     });
 
@@ -135,8 +151,8 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
     try {
       // Get coordinates for warehouse and orders
       const warehouseLocation = {
-        lat: parseFloat(warehouse.latitude),
-        lng: parseFloat(warehouse.longitude)
+        lat: parseFloat(warehouse.latitude || '0'),
+        lng: parseFloat(warehouse.longitude || '0')
       };
 
       // Filter orders that have valid coordinates
@@ -156,21 +172,21 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
       // Create waypoints for all orders
       const waypoints = validOrders.map(order => ({
         location: new window.google.maps.LatLng(
-          parseFloat(order.customer_lat),
-          parseFloat(order.customer_lng)
+          parseFloat(order.customer_lat || '0'),
+          parseFloat(order.customer_lng || '0')
         ),
         stopover: true
       }));
 
       // Get the optimized route from Google Maps Directions API
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
         directionsService.route({
           origin: warehouseLocation,
           destination: warehouseLocation, // Return to warehouse
           waypoints: waypoints,
           optimizeWaypoints: true, // This is the key feature - Google will optimize the route
           travelMode: window.google.maps.TravelMode.DRIVING,
-        }, (response, status) => {
+        }, (response: any, status: string) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
             resolve(response);
           } else {
@@ -185,15 +201,15 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
       // Calculate and store route details
       let totalDistance = 0;
       let totalDuration = 0;
-      const optimizedWaypoints = [];
+      const optimizedWaypoints: RouteWaypoint[] = [];
 
       // Process route data
       const route = result.routes[0];
       const legs = route.legs;
 
-      legs.forEach((leg, i) => {
-        totalDistance += leg.distance.value;
-        totalDuration += leg.duration.value;
+      legs.forEach((leg: any, i: number) => {
+        totalDistance += leg.distance?.value || 0;
+        totalDuration += leg.duration?.value || 0;
 
         // Add stops to optimized waypoints list
         if (i < legs.length - 1) { // Skip the last leg which returns to warehouse
@@ -202,10 +218,10 @@ const OptimizedRouteMap = ({ shipment, warehouse, orders }) => {
           
           optimizedWaypoints.push({
             orderNumber: orderIndex.order_number,
-            customerName: orderIndex.customer_name,
+            customerName: orderIndex.customer_name || 'Unknown',
             location: leg.end_location,
-            distance: leg.distance.text,
-            duration: leg.duration.text
+            distance: leg.distance?.text || '',
+            duration: leg.duration?.text || ''
           });
         }
       });

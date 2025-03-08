@@ -1,7 +1,7 @@
 // src/pages/Orders.tsx
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { 
   Card, CardContent, CardHeader, CardTitle,
   Button, Input,
@@ -9,27 +9,62 @@ import {
   Tabs, TabsContent, TabsList, TabsTrigger,
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
   DialogFooter, DialogClose
-} from '@/components/ui';
+} from '../components/ui';
 import { Package, Search, Plus, Filter, Download, RefreshCw } from 'lucide-react';
+import { Order, Warehouse, Customer } from '../types/models';
 
-const Orders = () => {
-  const [orders, setOrders] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
-  const [customers, setCustomers] = useState([]);
+interface OrderFilters {
+  warehouse_id: string;
+  customer_id: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  [key: string]: string; // Add index signature
+}
+
+interface DateRange {
+  startDate: string;
+  endDate: string;
+}
+
+interface NewOrderForm {
+  order_number: string;
+  customer_id: string;
+  pickup_warehouse_id: string;
+  delivery_address: string;
+  delivery_city: string;
+  delivery_province: string;
+  delivery_postal_code: string;
+  pickup_date: string;
+  delivery_date: string;
+  total_weight: number;
+  pallets: number;
+  special_instructions: string;
+}
+
+interface OrdersTableProps {
+  orders: Order[];
+  loading: boolean;
+}
+
+const Orders: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filter states
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: format(new Date(new Date().setDate(new Date().getDate() + 7)), 'yyyy-MM-dd')
   });
   
   // New order form
   const [showNewOrderDialog, setShowNewOrderDialog] = useState(false);
-  const [newOrderForm, setNewOrderForm] = useState({
+  const [newOrderForm, setNewOrderForm] = useState<NewOrderForm>({
     order_number: '',
     customer_id: '',
     pickup_warehouse_id: '',
@@ -49,8 +84,8 @@ const Orders = () => {
     const fetchInitialData = async () => {
       try {
         const [warehousesRes, customersRes] = await Promise.all([
-          axios.get('/api/warehouses'),
-          axios.get('/api/customers')
+          axios.get<Warehouse[]>('/api/warehouses'),
+          axios.get<Customer[]>('/api/customers')
         ]);
         
         setWarehouses(warehousesRes.data);
@@ -84,7 +119,7 @@ const Orders = () => {
   const loadOrders = async () => {
     setLoading(true);
     try {
-      const filters = {
+      const filters: OrderFilters = {
         warehouse_id: selectedWarehouse,
         customer_id: selectedCustomer,
         status: selectedStatus,
@@ -97,7 +132,7 @@ const Orders = () => {
         if (!filters[key]) delete filters[key];
       });
       
-      const response = await axios.get('/api/orders', { params: filters });
+      const response = await axios.get<{data: {orders: Order[]}}>('/api/orders', { params: filters });
       setOrders(response.data.data.orders);
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -113,7 +148,7 @@ const Orders = () => {
     }
   }, [selectedWarehouse, selectedCustomer, selectedStatus, dateRange]);
   
-  const handleNewOrderSubmit = async (e) => {
+  const handleNewOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
@@ -139,11 +174,12 @@ const Orders = () => {
       });
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Error creating order: ' + (error.response?.data?.message || error.message));
+      const axiosError = error as AxiosError;
+      alert('Error creating order: ' + (axiosError.response?.data as any)?.message || axiosError.message);
     }
   };
   
-  const handleFormChange = (e) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewOrderForm(prev => ({
       ...prev,
@@ -151,7 +187,7 @@ const Orders = () => {
     }));
   };
   
-  const handleSelectChange = (name, value) => {
+  const handleSelectChange = (name: string, value: string) => {
     setNewOrderForm(prev => ({
       ...prev,
       [name]: value
@@ -526,8 +562,8 @@ const Orders = () => {
 };
 
 // Orders Table Component
-const OrdersTable = ({ orders, loading }) => {
-  const getStatusColor = (status) => {
+const OrdersTable: React.FC<OrdersTableProps> = ({ orders, loading }) => {
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case 'pending': return 'bg-amber-100 text-amber-800';
       case 'assigned': return 'bg-blue-100 text-blue-800';
@@ -578,7 +614,7 @@ const OrdersTable = ({ orders, loading }) => {
                     <td className="p-3 text-right">{order.total_weight.toLocaleString()}</td>
                     <td className="p-3 text-right">{order.pallets}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(order.status || '')}`}>
                         {order.status}
                       </span>
                     </td>
